@@ -10,10 +10,12 @@ class Address extends Model
 {
 
     use SoftDeletes;
+
     protected $fillable = [
         'city_id',
         'user_id',
         'event_id',
+        'state_id',
         'zipcode',
         'address',
         'number',
@@ -24,6 +26,16 @@ class Address extends Model
         'longitude',
         'deleted_at',
     ];
+
+    public function city(): BelongsTo
+    {
+        return$this->belongsTo(City::class);
+    }
+
+    public function state(): BelongsTo
+    {
+        return$this->belongsTo(State::class);
+    }
 
     public function user(): BelongsTo
     {
