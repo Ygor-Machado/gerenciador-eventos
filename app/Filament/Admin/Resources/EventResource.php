@@ -19,31 +19,48 @@ class EventResource extends Resource
 {
     protected static ?string $model = Event::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $title = "Evento";
+    protected static ?string $modelLabel = "Evento";
+    protected static ?string $pluralLabel = "Eventos";
+
+
+    protected static ?string $navigationIcon = 'heroicon-o-beaker';
 
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Section::make([
-                    Forms\Components\Select::make('event_status_id')
-                        ->relationship('eventStatus', 'name')
-                        ->required(),
-                    Forms\Components\Select::make('event_type_id')
-                        ->relationship('eventType', 'name')
-                        ->required(),
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('description')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\DateTimePicker::make('schedule')
-                        ->required(),
-                    Forms\Components\FileUpload::make('cover')
-                        ->required()
-                        ->image(),
 
+            ->schema([
+                Forms\Components\Section::make([
+
+                    Forms\Components\Fieldset::make('Dados do evento')
+                        ->schema([
+                            Forms\Components\Select::make('event_status_id')
+                                ->relationship('eventStatus', 'name')
+                                ->required()
+                                ->columnSpan(2),
+                            Forms\Components\Select::make('event_type_id')
+                                ->relationship('eventType', 'name')
+                                ->required()
+                                ->columnSpan(2),
+                            Forms\Components\TextInput::make('name')
+                                ->required()
+                                ->maxLength(255)
+                                ->columnSpan(3),
+                            Forms\Components\DateTimePicker::make('schedule')
+                                ->required()
+                                ->columnSpan(1),
+                            Forms\Components\RichEditor::make('description')
+                                ->required()
+                                ->maxLength(255)
+                                ->columnSpanFull(),
+                            Forms\Components\FileUpload::make('cover')
+                                ->required()
+                                ->image()
+                                ->maxSize('10000000')
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(4),
                     Forms\Components\Fieldset::make('address')
                         ->relationship('address')
                         ->schema(AddressFormGroup::make($form))
@@ -95,7 +112,7 @@ class EventResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\AttractionsRelationManager::class
         ];
     }
 
