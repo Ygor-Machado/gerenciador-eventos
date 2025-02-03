@@ -5,23 +5,22 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource\RelationManagers;
 use App\Filament\FormGroups\AddressFormGroup;
+use App\Models\City;
 use App\Models\Role;
+use App\Models\State;
 use App\Models\User;
+use App\Services\AddressServices;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\QueryBuilder;
-use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -32,33 +31,34 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make([
-                    Fieldset::make('Papel')
+                Forms\Components\Section::make([
+                    Forms\Components\Fieldset::make('Papel')
                         ->schema([
-                            ToggleButtons::make('role_id')
+                            Forms\Components\ToggleButtons::make('role_id')
                                 ->hiddenLabel()
                                 ->required()
                                 ->options(Role::all()->sortBy('name')->pluck('name', 'id'))
                                 ->default(2)
                                 ->grouped(),
                         ]),
-                    Fieldset::make('Papel')
+                    Forms\Components\Fieldset::make('Papel')
                         ->schema([
-                            TextInput::make('name')
+                            Forms\Components\TextInput::make('name')
                                 ->label('Nome')
                                 ->required()
                                 ->maxLength(255),
-                            TextInput::make('email')
+                            Forms\Components\TextInput::make('email')
                                 ->label('Email')
                                 ->required()
                                 ->maxLength(255)
                                 ->unique(ignoreRecord: true),
-                            TextInput::make('password')
+                            Forms\Components\TextInput::make('password')
                                 ->label('Senha')
                                 ->required()
                                 ->maxLength(255)
@@ -66,21 +66,21 @@ class UserResource extends Resource
                                 ->rules([Password::min(8)->mixedCase()->numbers()->uncompromised()])
                                 ->password()
                                 ->revealable(),
-                            TextInput::make('password_confirmation')
+                            Forms\Components\TextInput::make('password_confirmation')
                                 ->label('Confirme a Senha')
                                 ->required()
                                 ->maxLength(255)
                                 ->password()
                                 ->revealable(),
                         ]),
-                ]),
-                Fieldset::make('Dados de endereço')
-                    ->schema([
-                        Repeater::make('addresses')
-                            ->hiddenLabel()
-                            ->relationship()
-                            ->schema(AddressFormGroup::make($form))
-                    ])->columns(1)
+                    Forms\Components\Fieldset::make('Dados de endereço')
+                        ->schema([
+                            Forms\Components\Repeater::make('addresses')
+                                ->hiddenLabel()
+                                ->relationship()
+                                ->schema(AddressFormGroup::make($form))
+                        ])->columns(1)
+                ])
             ]);
     }
 
@@ -88,38 +88,38 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                Tables\Columns\TextColumn::make('name')
                     ->label("Nome")
                     ->searchable(),
-                TextColumn::make('email')
+                Tables\Columns\TextColumn::make('email')
                     ->label("E-mail")
                     ->searchable(),
-                TextColumn::make('events_count')
+                Tables\Columns\TextColumn::make('events_count')
                     ->label("Eventos que participou")
                     ->badge()
                     ->color(function (int $state) {
-                        if ($state < 5) {
+                        if ($state > 5) {
                             return "gray";
                         }
 
                         return "success";
                     })
                     ->counts(['events' => fn (Builder $query): Builder => $query->whereNotNull('checkin_at')]),
-                TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('created_at')
                     ->label("Data")
-                    ->date("d F Y"),
-
+                    ->date("d F Y")
             ])
             ->filters([
-                SelectFilter::make('role_id')
-                    ->label("Função")
+                Tables\Filters\SelectFilter::make('role_id')
+                    ->label('Papel')
                     ->relationship('role', 'name'),
-                 QueryBuilder::make('events_count')
+                Tables\Filters\QueryBuilder::make('events_count')
                     ->constraints([
-                      RelationshipConstraint::make('events')
-                        ->relationship('events', 'name')->multiple()
+                        Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint::make('events')
+                            ->relationship('events', 'name')->multiple()
                     ])
-            ])->filtersFormWidth(MaxWidth::Large)
+            ])
+            ->filtersFormWidth(MaxWidth::ExtraLarge)
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
